@@ -6,10 +6,11 @@ import { AuthService } from '../auth.service';
 @Component({
   selector: 'app-login',
   templateUrl: './login.component.html',
-  styleUrls: ['./login.component.scss']
+  styleUrls: ['./login.component.scss'],
 })
 export class LoginComponent implements OnInit {
   loginForm!: FormGroup;
+  loginError: string | null = null; // Placeholder for error messages
 
   constructor(
     private fb: FormBuilder,
@@ -18,9 +19,10 @@ export class LoginComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    // Initialize the login form with email and password validators
     this.loginForm = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
-      password: ['', [Validators.required, Validators.minLength(6)]]
+      password: ['', [Validators.required, Validators.minLength(6)]],
     });
   }
 
@@ -28,19 +30,35 @@ export class LoginComponent implements OnInit {
     if (this.loginForm.valid) {
       const { email, password } = this.loginForm.value;
       console.log('Submitting login form:', { email, password });
-      this.authService.login({ email, password }).subscribe(
-        (response) => {
+
+      this.authService.login({ email, password }).subscribe({
+        next: (response) => {
           console.log('Login successful:', response);
-          console.log('Token:', response.token); // Log the token to the console
+
+          // Save the token
           this.authService.saveToken(response.token);
-          //this.router.navigate(['/dashboard']); // Replace with a valid route if needed
+
+          // Extract roles and redirect based on roles
+          const roles = this.authService.getRoles();
+          console.log('User roles:', roles);
+
+          if (roles.includes('ROLE_ADMIN')) {
+            this.router.navigate(['/admin/dashboard']); // Redirect to admin dashboard
+          } else if (roles.includes('ROLE_USER')) {
+            this.router.navigate(['/menu']); // Redirect to user menu
+          } else {
+            console.warn('Unknown role, redirecting to default route.');
+            this.router.navigate(['/']);
+          }
         },
-        (error) => {
-          console.error('Login failed:', error);
-        }
-      );
+        error: (err) => {
+          console.error('Login failed:', err);
+          this.loginError = 'Invalid credentials. Please try again.';
+        },
+      });
     } else {
       console.warn('Form is invalid:', this.loginForm.errors);
+      this.loginError = 'Please fill in all required fields correctly.';
     }
   }
 }

@@ -1,46 +1,43 @@
-<div class="min-h-screen bg-cover bg-center flex items-center justify-center">
-    <div class="bg-white bg-opacity-0 p-8 rounded-lg shadow-lg w-full max-w-md">
-      <h2 class="text-2xl font-bold mb-4 text-center text-gray-600">Sign In</h2>
-      <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
-        <div class="mb-4">
-          <label for="email" class="block text-gray-200">Email</label>
-          <input
-            formControlName="email"
-            type="email"
-            id="email"
-            name="email"
-            autocomplete="email"
-            class="w-full px-3 py-2 border rounded-lg focus:outline-none custom-input"
-            required
-          />
-        </div>
-        <div class="mb-4">
-          <label for="password" class="block text-gray-200">Password</label>
-          <input
-            formControlName="password"
-            type="password"
-            id="password"
-            name="password"
-            autocomplete="current-password"
-            class="w-full px-3 py-2 border rounded-lg focus:outline-none custom-input"
-            required
-          />
-        </div>
-        <button
-          type="submit"
-          class="w-full bg-blue-700 hover:bg-blue-800 text-white font-bold py-2 px-4 rounded"
-        >
-          Sign In
-        </button>
-      </form>
-      <div class="text-center mt-4">
-        <p class="text-gray-200">
-          Don't have an account?
-          <a routerLink="/register" class="text-orange-500 hover:underline">Sign up</a>
-        </p>
+<div class="min-h-screen flex-center bg-light-orange">
+  <div class="login-card">
+    <h2 class="title">Welcome Back!</h2>
+    <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+      <div class="form-group">
+        <label for="email">Email</label>
+        <input
+          formControlName="email"
+          type="email"
+          id="email"
+          name="email"
+          autocomplete="email"
+          class="input"
+          required
+        />
       </div>
-    </div>
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input
+          formControlName="password"
+          type="password"
+          id="password"
+          name="password"
+          autocomplete="current-password"
+          class="input"
+          required
+        />
+      </div>
+      <div class="form-options">
+        <label class="remember-me">
+          <input type="checkbox" />
+          Remember Me
+        </label>
+        <a href="#" class="forgot-link">Forgot Password?</a>
+      </div>
+      <button type="submit" class="btn">Sign In</button>
+    </form>
+    <p class="footer-text">
+      Don't have an account?
+      <a routerLink="/register" class="signup-link">Sign Up</a>
+    </p>
   </div>
-  
-
-  
+</div>

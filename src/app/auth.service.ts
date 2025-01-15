@@ -4,7 +4,7 @@ import { Router } from '@angular/router';
 import { BehaviorSubject, Observable, of } from 'rxjs';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class AuthService {
   private tokenKey = 'token'; // Key for localStorage where the token is stored
@@ -19,12 +19,12 @@ export class AuthService {
   }
 
   // Method to handle user registration
-  register(data: { email: string, password: string, confirmPassword: string }): Observable<any> {
+  register(data: { email: string; password: string; confirmPassword: string }): Observable<any> {
     return this.http.post(`${this.apiUrlAuth}/register`, data);
   }
 
   // Method to handle user login
-  login(credentials?: { email: string, password: string }): Observable<{ token: string }> {
+  login(credentials?: { email: string; password: string }): Observable<{ token: string }> {
     if (credentials) {
       return this.http.post<{ token: string }>(`${this.apiUrlAuth}/login`, credentials);
     } else {
@@ -54,20 +54,53 @@ export class AuthService {
   getUserId(): string | null {
     const token = this.getToken();
     if (token) {
-      return this.extractUserIdFromToken(token);
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        return payload.userId ? String(payload.userId) : null; // Use 'userId' key from token
+      } catch (error) {
+        console.error('Error decoding token:', error);
+      }
     }
     return null;
   }
+  
 
   private extractUserIdFromToken(token: string): string | null {
+    if (!token || typeof token !== 'string') {
+      console.warn('Invalid or missing token.');
+      return null;
+    }
+
     try {
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      return payload.id || null; // Assuming the user ID is stored in the "id" field of the payload
+      const payload = JSON.parse(atob(token.split('.')[1])); // Decode JWT payload
+      console.log('Decoded JWT Payload for User ID:', payload); // Debug log
+      return payload.id ? String(payload.id) : null; // Return user ID as a string
     } catch (error) {
-      console.error('Error decoding token:', error);
+      console.error('Error decoding token for user ID:', error);
       return null;
     }
   }
+
+  // Method to extract roles from JWT token payload
+  getRoles(): string[] {
+    const token = this.getToken();
+    if (token) {
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        console.log('Decoded JWT Payload for Roles:', payload);
+        // Ensure role is returned as an array
+        return Array.isArray(payload.roles)
+          ? payload.roles
+          : payload.role
+          ? [payload.role]
+          : [];
+      } catch (error) {
+        console.error('Error decoding token for roles:', error);
+      }
+    }
+    return [];
+  }
+  
 
   // Method to check if user is logged in by checking the presence of JWT token
   isLoggedIn(): boolean {
