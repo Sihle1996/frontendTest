@@ -30,18 +30,22 @@ export class LoginComponent implements OnInit {
     if (this.loginForm.valid) {
       const { email, password } = this.loginForm.value;
       console.log('Submitting login form:', { email, password });
-
+  
       this.authService.login({ email, password }).subscribe({
         next: (response) => {
           console.log('Login successful:', response);
-
+  
           // Save the token
           this.authService.saveToken(response.token);
-
+  
+          // Extract and log userId
+          const userId = this.authService.getUserId();
+          console.log('Logged-in User ID:', userId);
+  
           // Extract roles and redirect based on roles
           const roles = this.authService.getRoles();
           console.log('User roles:', roles);
-
+  
           if (roles.includes('ROLE_ADMIN')) {
             this.router.navigate(['/admin/dashboard']); // Redirect to admin dashboard
           } else if (roles.includes('ROLE_USER')) {
@@ -61,4 +65,5 @@ export class LoginComponent implements OnInit {
       this.loginError = 'Please fill in all required fields correctly.';
     }
   }
+  
 }

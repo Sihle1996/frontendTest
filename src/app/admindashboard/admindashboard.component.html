@@ -1,1 +1,21 @@
-<p>admindashboard works!</p>
+<div class="admin-dashboard">
+    <h2>Admin Dashboard</h2>
+    <h3>Orders</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Total Amount</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let order of orders">
+          <td>{{ order.id }}</td>
+          <td>{{ order.totalAmount | currency }}</td>
+          <td>{{ order.status }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  

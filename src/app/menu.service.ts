@@ -1,7 +1,6 @@
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { catchError, Observable, throwError } from 'rxjs';
-import { AuthService } from './auth.service';
 
 export interface MenuItem {
   id: number;
@@ -20,51 +19,74 @@ export interface CartItem {
   providedIn: 'root',
 })
 export class MenuService {
-  private baseUrl = 'http://localhost:8080/api/v1/auth'; // Common base URL
-  private tokenKey = 'token';
+  private baseUrl = 'http://localhost:8080/api'; // Common base URL
 
   constructor(private http: HttpClient) {}
-  
+
   private getToken(): string | null {
-    return localStorage.getItem(this.tokenKey)
-  }
-  // Fetch all menu items
-  getMenuItems(): Observable<MenuItem[]> {
-    return this.http.get<MenuItem[]>(`${this.baseUrl}/menu`);
+    return localStorage.getItem('token');
   }
 
-  // Add an item to the cart for a specific user
-  addToCart(menuItemId: number, userId: string, quantity: number = 1): Observable<any> {
-    const cartItem = { menuItem: { id: menuItemId }, quantity };
+  private getAuthHeaders(): HttpHeaders {
     const token = this.getToken();
-    if(!token) {
-      console.log('token missing')
-      return throwError(() => new Error('authorization token is missing'))
+    if (!token) {
+      throw new Error('Authorization token is missing.');
     }
-    return this.http.post(`${this.baseUrl}/cart/add?userId=${userId}`, cartItem,{
-      headers: new HttpHeaders({ Authorization: `Bearer ${token}`}),
+    return new HttpHeaders({ Authorization: `Bearer ${token}` });
+  }
+
+  getMenuItems(): Observable<MenuItem[]> {
+    return this.http.get<MenuItem[]>(`${this.baseUrl}/menu`).pipe(
+      catchError((error) => {
+        console.error('Error fetching menu items:', error);
+        return throwError(() => error);
+      })
+    );
+  }
+
+  addToCart(menuItemId: number, userId: string, quantity: number = 1): Observable<any> {
+    const payload = { userId, menuItemId, quantity };
+    return this.http.post(`${this.baseUrl}/cart/add`, payload, {
+      headers: this.getAuthHeaders(),
     }).pipe(
       catchError((error) => {
-        console.log('error adding to cart', error);
-        return throwError(()=> error)
+        console.error('Error adding item to cart:', error);
+        return throwError(() => error);
       })
-    )
+    );
   }
 
-  // Fetch all cart items for a specific user
   getCartItems(userId: string): Observable<CartItem[]> {
-    const token = this.getToken();
-    if(!token) {
-      console.log('token missing')
-      return throwError(() => new Error('authorization token is missing'))
-    }
-    return this.http.get<CartItem[]>(`${this.baseUrl}/cart?userId=${userId}`,{
-    headers:  new HttpHeaders({ Authorization: `Bearer ${token}`}),
-  }).pipe(
-    catchError((error) => {
-      console.log('error loading to cart', error);
-      return throwError(()=> error)
-    })
-  )
-}
+    return this.http.get<CartItem[]>(`${this.baseUrl}/cart`, {
+      headers: this.getAuthHeaders(),
+      params: { userId },
+    }).pipe(
+      catchError((error) => {
+        console.error('Error fetching cart items:', error);
+        return throwError(() => error);
+      })
+    );
+  }
+
+  updateCartItem(cartItemId: number, quantity: number): Observable<any> {
+    return this.http.put(`${this.baseUrl}/cart/update/${cartItemId}`, { quantity }, {
+      headers: this.getAuthHeaders(),
+    }).pipe(
+      catchError((error) => {
+        console.error('Error updating cart item:', error);
+        return throwError(() => error);
+      })
+    );
+  }
+
+  removeCartItem(cartItemId: number): Observable<any> {
+    return this.http.delete(`${this.baseUrl}/cart/delete/${cartItemId}`, {
+      headers: this.getAuthHeaders(),
+    }).pipe(
+      catchError((error) => {
+        console.error('Error removing cart item:', error);
+        return throwError(() => error);
+      })
+    );
+  }
 }

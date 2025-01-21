@@ -15,8 +15,11 @@
       <h2>{{ item.menuItem.name }}</h2>
       <p>Quantity: {{ item.quantity }}</p>
       <p class="cart-price">Total: ${{ (item.menuItem.price * item.quantity).toFixed(2) }}</p>
+      <button (click)="removeCartItem(item.id)" class="remove-cart-btn">Remove</button>
     </div>
   </div>
-</div>
 
-  
+  <div class="cart-total">
+    Total: ${{ getCartTotal() }}
+  </div>
+</div>

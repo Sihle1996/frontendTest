@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { AuthService } from '../auth.service';
-import { MenuItem, MenuService } from '../menu.service';
+import { MenuItem, MenuService, CartItem } from '../menu.service';
 
 @Component({
   selector: 'app-menu',
@@ -9,16 +9,16 @@ import { MenuItem, MenuService } from '../menu.service';
 })
 export class MenuComponent implements OnInit {
   menuItems: MenuItem[] = [];
-  cartItems: any[] = [];
+  cartItems: CartItem[] = [];
   userId: string | null = null;
 
   constructor(private menuService: MenuService, private authService: AuthService) {}
 
   ngOnInit(): void {
-    this.userId = this.authService.getUserId(); // Retrieve user ID from the token
-    this.loadMenuItems(); // Load products regardless of authentication
+    this.userId = this.authService.getUserId();
+    this.loadMenuItems();
     if (this.userId) {
-      this.loadCartItems(); // Load cart items only if user is logged in
+      this.loadCartItems();
     }
   }
 
@@ -28,40 +28,75 @@ export class MenuComponent implements OnInit {
         this.menuItems = data;
       },
       error: (err) => {
-        console.error('Failed to load menu items', err);
+        console.error('Error fetching menu items:', err);
       },
     });
   }
 
   addToCart(menuItemId: number): void {
-    if (this.userId) {
-      this.menuService.addToCart(menuItemId, this.userId).subscribe({
-        next: () => {
-          alert('Item added to cart successfully!');
-          this.loadCartItems(); // Reload cart after adding item
-        },
-        error: (err) => {
-          console.error('Failed to add item to cart', err);
-          alert('Could not add item to cart. Please try again.');
-        },
-      });
-    } else {
-      alert('You must be logged in to add items to the cart.');
+    if (!this.userId) {
+      alert('You must log in to add items to the cart.');
+      return;
     }
+
+    this.menuService.addToCart(menuItemId, this.userId).subscribe({
+      next: () => {
+        alert('Item added to cart!');
+        this.loadCartItems();
+      },
+      error: (err) => {
+        console.error('Error adding item to cart:', err);
+      },
+    });
   }
 
   loadCartItems(): void {
-    if (this.userId) {
-      this.menuService.getCartItems(this.userId).subscribe({
-        next: (data) => {
-          this.cartItems = data;
-        },
-        error: (err) => {
-          console.error('Failed to load cart items', err);
-        },
-      });
-    } else {
-      console.warn('User is not logged in. Cart items cannot be loaded.');
+    if (!this.userId) {
+      console.warn('User is not logged in. Cannot load cart items.');
+      return;
     }
+
+    this.menuService.getCartItems(this.userId).subscribe({
+      next: (data) => {
+        this.cartItems = data;
+      },
+      error: (err) => {
+        console.error('Error fetching cart items:', err);
+      },
+    });
+  }
+
+  updateCartItem(cartItemId: number, quantity: number): void {
+    if (quantity <= 0) {
+      alert('Quantity must be greater than zero.');
+      return;
+    }
+
+    this.menuService.updateCartItem(cartItemId, quantity).subscribe({
+      next: () => {
+        alert('Cart item updated.');
+        this.loadCartItems();
+      },
+      error: (err) => {
+        console.error('Error updating cart item:', err);
+      },
+    });
+  }
+
+  removeCartItem(cartItemId: number): void {
+    this.menuService.removeCartItem(cartItemId).subscribe({
+      next: () => {
+        alert('Item removed from cart.');
+        this.loadCartItems();
+      },
+      error: (err) => {
+        console.error('Error removing cart item:', err);
+      },
+    });
+  }
+
+  getCartTotal(): string {
+    const total = this.cartItems.reduce((sum, item) => sum + item.menuItem.price * item.quantity, 0);
+    return total.toFixed(2);
   }
 }
